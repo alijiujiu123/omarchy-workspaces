@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "alijiujiu.workspaces",
+  "name": "Workspaces (per-screen ordinals)",
+  "version": "1.0.0",
+  "author": "alijiujiu",
+  "description": "Workspace numbers, derived per screen: the n-th workspace of the screen you are on",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "Workspaces.qml"
+  },
+  "barWidget": {
+    "displayName": "Workspaces (per-screen)",
+    "description": "Workspace numbers, derived per screen",
+    "category": "Compositor",
+    "allowMultiple": false
+  },
+  "omarchy": {
+    "clonedFrom": "omarchy.workspaces"
+  }
+}
