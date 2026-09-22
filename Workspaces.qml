@@ -112,11 +112,19 @@ BarWidget {
   function activate(slot) {
     if (!root.bar || !slot) return
 
-    // The "+": the resolver creates a blank workspace on this screen and goes there. The bar's `run`
-    // channel evaluates its argument as Lua (that is how the built-in widget focused workspaces), so
-    // this is the same code path the keybinding uses — no second implementation of "new".
+    // The "+": a new blank workspace on this screen, and you go there. The bar's dispatch channel only
+    // accepts a *dispatcher value* (it wraps the argument in `hl.dispatch(...)`), so the id is computed
+    // here, exactly the way `workspaces.next_id` does it in the resolver: the smallest free id above
+    // this screen's highest, which keeps the new workspace last in the ordinal order. Then the same two
+    // steps the resolver takes — focus the id (that is how Hyprland creates a workspace) and move it to
+    // this bar's screen, because an id can already be pinned elsewhere by a hyprmoncfg rule.
     if (slot.add !== undefined) {
-      root.bar.run("hyprctl dispatch " + Util.shellQuote("workspaces.new()"))
+      var ids = root.occupiedWorkspaces().map(function(w) { return w.id })
+      var next = 1
+      for (var i = 0; i < ids.length; i++) if (ids[i] >= next) next = ids[i] + 1
+      var target = String(next)
+      root.bar.run("hyprctl dispatch " + Util.shellQuote("hl.dsp.focus({ workspace = \"" + target + "\" })"))
+      root.bar.run("hyprctl dispatch " + Util.shellQuote("hl.dsp.workspace.move({ workspace = \"" + target + "\", monitor = \"" + root.screenName() + "\" })"))
       return
     }
 
