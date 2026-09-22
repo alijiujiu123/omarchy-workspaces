@@ -65,12 +65,13 @@ BarWidget {
       // the one thing they agree on, and when the screen is unknown nothing is filtered.
       if (screen !== "" && ws.monitor && String(ws.monitor.name) !== screen) continue
 
+      // A workspace is a slot when it has windows, or when it is the one you are on. Persistence is
+      // deliberately *not* consulted any more (2026-09-22): "persistent" was standing in for "reserved
+      // slot", and the rule is now "no windows, no slot" — an empty workspace is not something to
+      // reserve, it is something Hyprland removes once its monitor moves on.
       var hasWindows = ws.toplevels && ws.toplevels.values.length > 0
-      // `ispersistent` comes straight off the compositor's own workspace object; if a future
-      // Quickshell stops exposing it the widget degrades to "occupied or current", never breaks.
-      var persistent = ws.lastIpcObject && ws.lastIpcObject.ispersistent === true
       var current = Hyprland.focusedWorkspace !== null && Hyprland.focusedWorkspace.id === ws.id
-      if (!hasWindows && !persistent && !current) continue
+      if (!hasWindows && !current) continue
 
       out.push(ws)
     }
