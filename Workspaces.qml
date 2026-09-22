@@ -85,14 +85,12 @@ BarWidget {
     var list = root.occupiedWorkspaces()
     var shown = list.slice(0, 10)
     if (list.length > 10) shown.push({ overflow: list.length - 10 })
-    shown.push({ debug: root.screenName() + "|" + list.length })   // TEMPORARY DIAGNOSTIC
     return shown
   }
 
   // `1..9`, then `0` for the tenth: the digits are laid out that way on a keyboard, and it keeps
   // this widget in step with the overview's labels and `SUPER + 0`.
   function labelFor(slot, index) {
-    if (slot && slot.debug !== undefined) return String(slot.debug)   // TEMPORARY DIAGNOSTIC
     if (slot && slot.overflow !== undefined) return "+" + slot.overflow
     if (index === 9) return "0"
     return String(index + 1)
@@ -117,23 +115,6 @@ BarWidget {
     }
 
     root.bar.run("hyprctl dispatch " + Util.shellQuote("hl.dsp.focus({ workspace = \"" + slot.id + "\" })"))
-  }
-
-  // TEMPORARY DIAGNOSTIC (removed in the next commit): the bar's own screen could not be read
-  // through two different attached properties, so this prints what each bar instance actually sees.
-  Component.onCompleted: root.wsDebugLog("completed")
-  onBarScreenNameChanged: root.wsDebugLog("screen-changed")
-  function wsDebugLog(tag) {
-    var win = root.QsWindow ? root.QsWindow.window : null
-    var winScreen = win && win.screen ? win.screen.name : "<no-window-screen>"
-    var names = []
-    for (var i = 0; i < Quickshell.screens.length; i++) names.push(Quickshell.screens[i].name)
-    var line = "WSDBG " + tag + " module=" + root.moduleName + " qsWindowWindow=" + (win === null ? "null" : "obj")
-      + " winScreen=" + winScreen + " screens=[" + names.join(",") + "]"
-      + " focused=" + (Hyprland.focusedMonitor ? Hyprland.focusedMonitor.name : "<none>")
-      + " resolved=" + root.screenName() + " count=" + root.occupiedWorkspaces().length
-    // console.log is not forwarded to the journal for plugin QML, so this goes to a file we can read.
-    Quickshell.execDetached(["sh", "-c", "printf '%s\\n' " + JSON.stringify(line) + " >> /tmp/wsdbg.log"])
   }
 
   readonly property real trailingGap: root.vertical ? 0 : Style.spaceReal(1.5)
