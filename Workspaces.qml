@@ -117,6 +117,21 @@ BarWidget {
     root.bar.run("hyprctl dispatch " + Util.shellQuote("hl.dsp.focus({ workspace = \"" + slot.id + "\" })"))
   }
 
+  // TEMPORARY DIAGNOSTIC (removed in the next commit): the bar's own screen could not be read
+  // through two different attached properties, so this prints what each bar instance actually sees.
+  Component.onCompleted: root.wsDebugLog("completed")
+  onBarScreenNameChanged: root.wsDebugLog("screen-changed")
+  function wsDebugLog(tag) {
+    var win = root.QsWindow ? root.QsWindow.window : null
+    var winScreen = win && win.screen ? win.screen.name : "<no-window-screen>"
+    var names = []
+    for (var i = 0; i < Quickshell.screens.length; i++) names.push(Quickshell.screens[i].name)
+    console.log("WSDBG " + tag + " module=" + root.moduleName + " qsWindowWindow=" + (win === null ? "null" : "obj")
+      + " winScreen=" + winScreen + " screens=[" + names.join(",") + "]"
+      + " focused=" + (Hyprland.focusedMonitor ? Hyprland.focusedMonitor.name : "<none>")
+      + " resolved=" + root.screenName() + " count=" + root.occupiedWorkspaces().length)
+  }
+
   readonly property real trailingGap: root.vertical ? 0 : Style.spaceReal(1.5)
 
   implicitWidth: grid.implicitWidth + trailingGap
