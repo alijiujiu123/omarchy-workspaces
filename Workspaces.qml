@@ -29,18 +29,36 @@ BarWidget {
   id: root
   moduleName: "alijiujiu.workspaces"
 
+  // Which screen this bar belongs to. The bar surface is created *per screen*
+  // (`Variants { model: Quickshell.screens }` in the shell's Bar.qml), so the widget asks its own
+  // window which screen it is on — and that is the right answer for a per-screen bar: each bar
+  // shows its own screen's numbers, the way a per-screen bar should. The focused monitor is only
+  // the fallback for the case where the window or its screen cannot be read (which keeps a single
+  // bar correct when the pointer is on the other screen).
+  readonly property string barScreenName: {
+    var win = Window.window
+    var screen = win && win.screen ? win.screen : null
+    return screen && screen.name ? String(screen.name) : ""
+  }
+
+  function screenName() {
+    if (root.barScreenName !== "") return root.barScreenName
+    return Hyprland.focusedMonitor && Hyprland.focusedMonitor.name ? String(Hyprland.focusedMonitor.name) : ""
+  }
+
   // This screen's workspaces that occupy an ordinal (I1-I4), in ordinal order.
   function occupiedWorkspaces() {
-    var monitor = Hyprland.focusedMonitor
+    var screen = root.screenName()
     var values = Hyprland.workspaces.values
     var out = []
 
     for (var i = 0; i < values.length; i++) {
       var ws = values[i]
       if (!ws || ws.id <= 0) continue
-      // I4: monitors are singletons in Quickshell, so identity is the comparison — the same object
-      // the focused monitor is, or nothing.
-      if (monitor && ws.monitor && ws.monitor !== monitor) continue
+      // I4: compare by screen *name*, because the two types involved are different ones (the bar's
+      // screen is a Quickshell ShellScreen, a workspace's monitor is a HyprlandMonitor); the name is
+      // the one thing they agree on, and when the screen is unknown nothing is filtered.
+      if (screen !== "" && ws.monitor && String(ws.monitor.name) !== screen) continue
 
       var hasWindows = ws.toplevels && ws.toplevels.values.length > 0
       // `ispersistent` comes straight off the compositor's own workspace object; if a future
