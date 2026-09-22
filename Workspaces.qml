@@ -126,10 +126,12 @@ BarWidget {
     var winScreen = win && win.screen ? win.screen.name : "<no-window-screen>"
     var names = []
     for (var i = 0; i < Quickshell.screens.length; i++) names.push(Quickshell.screens[i].name)
-    console.log("WSDBG " + tag + " module=" + root.moduleName + " qsWindowWindow=" + (win === null ? "null" : "obj")
+    var line = "WSDBG " + tag + " module=" + root.moduleName + " qsWindowWindow=" + (win === null ? "null" : "obj")
       + " winScreen=" + winScreen + " screens=[" + names.join(",") + "]"
       + " focused=" + (Hyprland.focusedMonitor ? Hyprland.focusedMonitor.name : "<none>")
-      + " resolved=" + root.screenName() + " count=" + root.occupiedWorkspaces().length)
+      + " resolved=" + root.screenName() + " count=" + root.occupiedWorkspaces().length
+    // console.log is not forwarded to the journal for plugin QML, so this goes to a file we can read.
+    Quickshell.execDetached(["sh", "-c", "printf '%s\\n' " + JSON.stringify(line) + " >> /tmp/wsdbg.log"])
   }
 
   readonly property real trailingGap: root.vertical ? 0 : Style.spaceReal(1.5)
