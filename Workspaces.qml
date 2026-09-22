@@ -65,13 +65,14 @@ BarWidget {
       // the one thing they agree on, and when the screen is unknown nothing is filtered.
       if (screen !== "" && ws.monitor && String(ws.monitor.name) !== screen) continue
 
-      // A workspace is a slot when it has windows, or when it is the one you are on. Persistence is
-      // deliberately *not* consulted any more (2026-09-22): "persistent" was standing in for "reserved
-      // slot", and the rule is now "no windows, no slot" — an empty workspace is not something to
-      // reserve, it is something Hyprland removes once its monitor moves on.
+      // A slot is a workspace with windows, the one you are on, or the screen's **spare** — the one
+      // empty workspace every screen keeps at the end (the user's model, 2026-09-22: "always keep one
+      // blank workspace, at the end"). The spare is the only persistent workspace the resolver ever
+      // marks, and it is what makes an add button unnecessary: the last slot *is* the new workspace.
       var hasWindows = ws.toplevels && ws.toplevels.values.length > 0
       var current = Hyprland.focusedWorkspace !== null && Hyprland.focusedWorkspace.id === ws.id
-      if (!hasWindows && !current) continue
+      var spare = ws.lastIpcObject && ws.lastIpcObject.ispersistent === true
+      if (!hasWindows && !current && !spare) continue
 
       out.push(ws)
     }
