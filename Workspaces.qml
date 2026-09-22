@@ -65,14 +65,12 @@ BarWidget {
       // the one thing they agree on, and when the screen is unknown nothing is filtered.
       if (screen !== "" && ws.monitor && String(ws.monitor.name) !== screen) continue
 
-      // A slot is a workspace with windows, the one you are on, or the screen's **spare** — the one
-      // empty workspace every screen keeps at the end (the user's model, 2026-09-22: "always keep one
-      // blank workspace, at the end"). The spare is the only persistent workspace the resolver ever
-      // marks, and it is what makes an add button unnecessary: the last slot *is* the new workspace.
+      // A slot is a workspace with windows, or the one you are on. A blank one is not kept: Hyprland
+      // closes it the moment its screen moves past it (the user's rule, 2026-09-22), so adding a
+      // workspace is a button — the trailing "+" below — not a reserved slot.
       var hasWindows = ws.toplevels && ws.toplevels.values.length > 0
       var current = Hyprland.focusedWorkspace !== null && Hyprland.focusedWorkspace.id === ws.id
-      var spare = ws.lastIpcObject && ws.lastIpcObject.ispersistent === true
-      if (!hasWindows && !current && !spare) continue
+      if (!hasWindows && !current) continue
 
       out.push(ws)
     }
@@ -87,12 +85,17 @@ BarWidget {
     var list = root.occupiedWorkspaces()
     var shown = list.slice(0, 10)
     if (list.length > 10) shown.push({ overflow: list.length - 10 })
+    // The trailing "+": a new blank workspace on this screen, and you go there. It is the only add
+    // affordance in the bar, and the overview has the same one under its cards — both call the same
+    // resolver function, so there is one definition of what "new" means.
+    shown.push({ add: true })
     return shown
   }
 
   // `1..9`, then `0` for the tenth: the digits are laid out that way on a keyboard, and it keeps
   // this widget in step with the overview's labels and `SUPER + 0`.
   function labelFor(slot, index) {
+    if (slot && slot.add !== undefined) return "+"
     if (slot && slot.overflow !== undefined) return "+" + slot.overflow
     if (index === 9) return "0"
     return String(index + 1)
@@ -108,6 +111,14 @@ BarWidget {
 
   function activate(slot) {
     if (!root.bar || !slot) return
+
+    // The "+": the resolver creates a blank workspace on this screen and goes there. The bar's `run`
+    // channel evaluates its argument as Lua (that is how the built-in widget focused workspaces), so
+    // this is the same code path the keybinding uses — no second implementation of "new".
+    if (slot.add !== undefined) {
+      root.bar.run("hyprctl dispatch " + Util.shellQuote("workspaces.new()"))
+      return
+    }
 
     // The overflow chip cannot focus a workspace it does not name: the overview is the surface that
     // shows them all (including the trailing add card), so that is where it goes.
@@ -140,12 +151,13 @@ BarWidget {
         required property int index
 
         readonly property bool overflow: modelData && modelData.overflow !== undefined
+        readonly property bool addSlot: modelData && modelData.add !== undefined
         readonly property bool occupied: root.isOccupied(modelData)
         readonly property bool focused: root.isFocused(modelData)
 
         bar: root.bar
         text: focused ? "\uDB85\uDCFB" : root.labelFor(modelData, index)
-        opacity: overflow ? 0.7 : (occupied || focused ? 1 : 0.5)
+        opacity: (overflow || addSlot) ? 0.75 : (occupied || focused ? 1 : 0.5)
         horizontalMargin: 6
         verticalPadding: 6
         fixedWidth: root.vertical ? root.barSize : Style.space(20)
