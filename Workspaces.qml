@@ -85,12 +85,14 @@ BarWidget {
     var list = root.occupiedWorkspaces()
     var shown = list.slice(0, 10)
     if (list.length > 10) shown.push({ overflow: list.length - 10 })
+    shown.push({ debug: root.screenName() + "|" + list.length })   // TEMPORARY DIAGNOSTIC
     return shown
   }
 
   // `1..9`, then `0` for the tenth: the digits are laid out that way on a keyboard, and it keeps
   // this widget in step with the overview's labels and `SUPER + 0`.
   function labelFor(slot, index) {
+    if (slot && slot.debug !== undefined) return String(slot.debug)   // TEMPORARY DIAGNOSTIC
     if (slot && slot.overflow !== undefined) return "+" + slot.overflow
     if (index === 9) return "0"
     return String(index + 1)
