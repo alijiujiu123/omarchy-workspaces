@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import Quickshell.Hyprland
 import qs.Commons
 import qs.Ui
@@ -36,7 +37,11 @@ BarWidget {
   // the fallback for the case where the window or its screen cannot be read (which keeps a single
   // bar correct when the pointer is on the other screen).
   readonly property string barScreenName: {
-    var win = Window.window
+    // `QsWindow.window` is Quickshell's own attached property for exactly this (the shell's PopupCard
+    // and Bar use it the same way); QtQuick's `Window.window` is null here, because the panel is a
+    // Quickshell window rather than a plain QQuickWindow — which is what the first attempt at this
+    // used, and the fallback quietly hid it.
+    var win = root.QsWindow ? root.QsWindow.window : null
     var screen = win && win.screen ? win.screen : null
     return screen && screen.name ? String(screen.name) : ""
   }
